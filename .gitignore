@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.next/
+coverage/
+*.tsbuildinfo
+.DS_Store
+
+ui/node_modules/
+ui/.next/
+ui/out/
+ui/.vercel/
+ui/coverage/
+*.log
+ui/.cursor/
+ui/.claude/

@@ -1,0 +1,21 @@
+.next
+.vercel
+node_modules
+.DS_Store
+.cursor
+.claude
+dist
+out
+coverage
+*.tsbuildinfo
+
+# Environment variables
+.env
+.env.local
+.env*.local
+
+# Large audio files (use compressed formats instead)
+*.wav
+
+# Generated waveform peaks
+public/peaks

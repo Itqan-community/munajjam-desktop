@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.next/
+ui/node_modules/
+ui/.next/
+ui/out/
+ui/public/
