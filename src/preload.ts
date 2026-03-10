@@ -99,8 +99,7 @@ const bridge: MunajjamBridge = {
   },
   env: {
     check: () => invoke("env:check"),
-    installMunajjam: (options?: { editable?: boolean; packagePath?: string }) =>
-      invoke("env:installMunajjam", options),
+    installRuntime: () => invoke("env:installRuntime"),
     subscribe: (callback: (progress: EnvInstallProgress) => void) => {
       const handler = (_event: IpcRendererEvent, progress: EnvInstallProgress) => callback(progress);
       ipcRenderer.on("env:installProgress", handler);

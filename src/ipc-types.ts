@@ -153,9 +153,15 @@ export interface EnvCheckResult {
   pythonVersion: string | null;
   pythonPath: string | null;
   pip: boolean;
+  ffmpeg: boolean;
+  ffmpegPath: string | null;
   munajjam: boolean;
   munajjamVersion: string | null;
   platform: string;
+  platformSupported: boolean;
+  packageManagerAvailable: boolean;
+  packageManagerName: string | null;
+  managedInstallPath: string | null;
   localPackageAvailable: boolean;
   localPackagePath: string | null;
 }
@@ -231,7 +237,7 @@ export interface MunajjamBridge {
   };
   env: {
     check: () => Promise<EnvCheckResult>;
-    installMunajjam: (options?: { editable?: boolean; packagePath?: string }) => Promise<{ success: boolean }>;
+    installRuntime: () => Promise<{ success: boolean }>;
     subscribe: (callback: (progress: EnvInstallProgress) => void) => () => void;
   };
 }

@@ -39,7 +39,7 @@ export function EnvProvider({ children }: { children: ReactNode }) {
       const bridge = getElectronBridge();
       const checkResult = await bridge.env.check();
       setResult(checkResult);
-      setStatus(checkResult.python && checkResult.munajjam ? "ready" : "failed");
+      setStatus(checkResult.python && checkResult.ffmpeg && checkResult.munajjam ? "ready" : "failed");
     } catch {
       setStatus("failed");
     }

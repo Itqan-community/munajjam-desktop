@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Globe, Plus, ChevronLeft, ChevronRight, RotateCcw, Trash2 } from "lucide-react";
+import { Globe, Plus, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
 import { useWorkspace } from "@/lib/workspace-context";
-import { getElectronBridge } from "@/lib/electron";
 import ProjectSection, { PROJECT_COLORS } from "./ProjectSection";
 
 interface WorkspaceSidebarProps {
@@ -365,28 +364,6 @@ export default function WorkspaceSidebar({ locale, collapsed = false, onToggleCo
           <span className="text-[11px] text-white/30 font-medium">
             {locale === "ar" ? "EN" : "\u0639\u0631\u0628\u064a"}
           </span>
-        </button>
-        {/* Reset onboarding (dev) */}
-        <button
-          onClick={() => {
-            dispatch({ type: "COMPLETE_ONBOARDING" });
-            // Set it to false directly via the bridge then reload
-            getElectronBridge().data.getWorkspaceState().then((saved) => {
-              if (saved && typeof saved === "object" && !Array.isArray(saved)) {
-                const updated = {
-                  ...(saved as Record<string, unknown>),
-                  onboardingCompleted: false,
-                };
-                getElectronBridge().data.saveWorkspaceState(updated).then(() => {
-                  window.location.reload();
-                });
-              }
-            });
-          }}
-          className={footerButtonClass}
-        >
-          <RotateCcw className="w-3.5 h-3.5 shrink-0" />
-          <span className="flex-1 text-start">Reset Onboarding</span>
         </button>
         {/* Collapse toggle */}
         <button
