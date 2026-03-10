@@ -181,6 +181,12 @@ export class JobsManager {
         ...process.env,
         PYTHONUNBUFFERED: "1",
         PYTHONPATH: [runtime.localPythonPath, process.env.PYTHONPATH].filter(Boolean).join(path.delimiter),
+        PATH: [
+          runtime.ffmpegPath ? path.dirname(runtime.ffmpegPath) : null,
+          process.env.PATH,
+        ]
+          .filter(Boolean)
+          .join(path.delimiter),
       },
     });
 

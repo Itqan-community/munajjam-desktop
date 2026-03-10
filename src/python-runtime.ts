@@ -4,6 +4,9 @@ import path from "path";
 import {
   localPackageDir,
   localPyprojectPath,
+  managedFfmpegPathFile,
+  managedPythonPath,
+  managedRuntimeRoot,
   pythonPackageRoot,
   pythonScriptPath,
 } from "./paths";
@@ -17,8 +20,14 @@ export interface PythonRuntimeInfo extends PythonInvocation {
   pythonVersion: string | null;
   pythonPath: string | null;
   pipAvailable: boolean;
+  ffmpegAvailable: boolean;
+  ffmpegPath: string | null;
   munajjamAvailable: boolean;
   munajjamVersion: string | null;
+  packageManagerAvailable: boolean;
+  packageManagerName: string | null;
+  managedInstallPath: string | null;
+  platformSupported: boolean;
   localPackageAvailable: boolean;
   localPackagePath: string | null;
   localPythonPath: string | null;
@@ -37,6 +46,20 @@ export interface AlignmentEntrypoint {
 
 const DEFAULT_TIMEOUT_MS = 10_000;
 
+export function isInstallerPlatformSupported(platform: NodeJS.Platform): boolean {
+  return platform === "darwin" || platform === "win32";
+}
+
+export function getPackageManagerDetails(platform: NodeJS.Platform): { command: string; name: string } | null {
+  if (platform === "darwin") {
+    return { command: "brew", name: "Homebrew" };
+  }
+  if (platform === "win32") {
+    return { command: "winget", name: "winget" };
+  }
+  return null;
+}
+
 function hasLocalPackage(): boolean {
   return fs.existsSync(localPyprojectPath());
 }
@@ -50,9 +73,32 @@ function getLocalPythonPath(): string | null {
   return fs.existsSync(root) ? root : null;
 }
 
-function runQuiet(command: string, args: string[], timeout = DEFAULT_TIMEOUT_MS): Promise<QuietResult> {
+function getManagedInstallPath(): string | null {
+  return fs.existsSync(managedRuntimeRoot()) ? managedRuntimeRoot() : null;
+}
+
+function getManagedFfmpegPath(): string | null {
+  const marker = managedFfmpegPathFile();
+  if (!fs.existsSync(marker)) {
+    return null;
+  }
+
+  const value = fs.readFileSync(marker, "utf-8").trim();
+  if (!value) {
+    return null;
+  }
+
+  return fs.existsSync(value) ? value : null;
+}
+
+function runQuiet(
+  command: string,
+  args: string[],
+  timeout = DEFAULT_TIMEOUT_MS,
+  env: NodeJS.ProcessEnv | undefined = undefined,
+): Promise<QuietResult> {
   return new Promise((resolve) => {
-    const child = spawn(command, args, { timeout });
+    const child = spawn(command, args, { timeout, env });
     let stdout = "";
     let stderr = "";
 
@@ -77,6 +123,14 @@ async function resolvePythonInvocation(): Promise<PythonInvocation | null> {
     const result = await runQuiet(override, ["--version"]);
     if (result.exitCode === 0) {
       return { command: override, prefix: [] };
+    }
+  }
+
+  const managed = managedPythonPath();
+  if (fs.existsSync(managed)) {
+    const result = await runQuiet(managed, ["--version"]);
+    if (result.exitCode === 0) {
+      return { command: managed, prefix: [] };
     }
   }
 
@@ -110,11 +164,44 @@ async function resolvePythonInvocation(): Promise<PythonInvocation | null> {
   return null;
 }
 
+async function resolveCommandPath(command: string): Promise<string | null> {
+  const locator = process.platform === "win32" ? "where" : "which";
+  const result = await runQuiet(locator, [command]);
+  if (result.exitCode !== 0) {
+    return null;
+  }
+  const line = result.stdout.split(/\r?\n/).find((value) => value.trim().length > 0);
+  return line ?? null;
+}
+
+async function probeMunajjamImport(
+  invocation: PythonInvocation,
+  extraEnv?: NodeJS.ProcessEnv,
+): Promise<{ available: boolean; version: string | null }> {
+  const result = await runQuiet(
+    invocation.command,
+    [...invocation.prefix, "-c", "import munajjam; print(getattr(munajjam, '__version__', 'unknown'))"],
+    DEFAULT_TIMEOUT_MS,
+    extraEnv,
+  );
+  return {
+    available: result.exitCode === 0,
+    version: result.exitCode === 0 ? result.stdout : null,
+  };
+}
+
 export async function inspectPythonRuntime(): Promise<PythonRuntimeInfo> {
   const invocation = await resolvePythonInvocation();
   const localPackageAvailable = hasLocalPackage();
   const localPackagePath = getLocalPackagePath();
   const localPythonPath = getLocalPythonPath();
+  const managedInstallPath = getManagedInstallPath();
+  const packageManager = getPackageManagerDetails(process.platform);
+  const packageManagerResult = packageManager
+    ? await runQuiet(packageManager.command, ["--version"])
+    : { exitCode: 1 };
+  const ffmpegPath = getManagedFfmpegPath() ?? (await resolveCommandPath("ffmpeg"));
+  const ffmpegAvailable = !!ffmpegPath;
 
   if (!invocation) {
     return {
@@ -123,8 +210,14 @@ export async function inspectPythonRuntime(): Promise<PythonRuntimeInfo> {
       pythonVersion: null,
       pythonPath: null,
       pipAvailable: false,
+      ffmpegAvailable,
+      ffmpegPath,
       munajjamAvailable: false,
       munajjamVersion: null,
+      packageManagerAvailable: packageManagerResult.exitCode === 0,
+      packageManagerName: packageManager?.name ?? null,
+      managedInstallPath,
+      platformSupported: isInstallerPlatformSupported(process.platform),
       localPackageAvailable,
       localPackagePath,
       localPythonPath,
@@ -138,11 +231,13 @@ export async function inspectPythonRuntime(): Promise<PythonRuntimeInfo> {
     "import sys; print(sys.executable)",
   ]);
   const pipResult = await runQuiet(invocation.command, [...invocation.prefix, "-m", "pip", "--version"]);
-  const munajjamResult = await runQuiet(invocation.command, [
-    ...invocation.prefix,
-    "-c",
-    "import munajjam; print(getattr(munajjam, '__version__', 'unknown'))",
-  ]);
+  let munajjamResult = await probeMunajjamImport(invocation);
+  if (!munajjamResult.available && localPythonPath) {
+    munajjamResult = await probeMunajjamImport(invocation, {
+      ...process.env,
+      PYTHONPATH: [localPythonPath, process.env.PYTHONPATH].filter(Boolean).join(path.delimiter),
+    });
+  }
 
   const versionMatch = versionResult.stdout.match(/Python\\s+([\\d.]+)/);
 
@@ -151,8 +246,14 @@ export async function inspectPythonRuntime(): Promise<PythonRuntimeInfo> {
     pythonVersion: versionResult.exitCode === 0 ? versionMatch?.[1] ?? versionResult.stdout : null,
     pythonPath: pythonPathResult.exitCode === 0 ? pythonPathResult.stdout : null,
     pipAvailable: pipResult.exitCode === 0,
-    munajjamAvailable: munajjamResult.exitCode === 0,
-    munajjamVersion: munajjamResult.exitCode === 0 ? munajjamResult.stdout : null,
+    ffmpegAvailable,
+    ffmpegPath,
+    munajjamAvailable: munajjamResult.available,
+    munajjamVersion: munajjamResult.version,
+    packageManagerAvailable: packageManagerResult.exitCode === 0,
+    packageManagerName: packageManager?.name ?? null,
+    managedInstallPath,
+    platformSupported: isInstallerPlatformSupported(process.platform),
     localPackageAvailable,
     localPackagePath,
     localPythonPath,
