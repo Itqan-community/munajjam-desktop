@@ -1,10 +1,10 @@
 import { ipcMain, BrowserWindow } from "electron";
-import { randomUUID } from "crypto";
 import type { LocalDb } from "./db";
 import type { JobsManager } from "./jobs";
 import type { JobRow } from "./ipc-types";
-import { errorResult, ok, toIpcErrorInfo, IpcHandlerError } from "./errors";
+import { errorResult, ok, toIpcErrorInfo } from "./errors";
 import { approvePath, isPathApproved } from "./approved-paths";
+import { issueExportTicket, consumeExportTicket } from "./export-tickets";
 import { createLogger } from "./logger";
 import { registerDataHandlers } from "./ipc/register-data";
 import { registerDialogHandlers } from "./ipc/register-dialog";
@@ -22,30 +22,6 @@ interface IpcDeps {
 
 const log = createLogger("ipc");
 const AUDIO_EXTENSIONS = new Set(["mp3", "wav", "m4a", "flac"]);
-const EXPORT_TICKET_TTL_MS = 5 * 60 * 1000;
-const exportTickets = new Map<string, { filePath: string; expiresAt: number }>();
-
-function issueExportTicket(filePath: string): string {
-  const token = randomUUID();
-  exportTickets.set(token, {
-    filePath,
-    expiresAt: Date.now() + EXPORT_TICKET_TTL_MS,
-  });
-  return token;
-}
-
-function consumeExportTicket(token: string): string {
-  const entry = exportTickets.get(token);
-  exportTickets.delete(token);
-
-  if (!entry) {
-    throw new IpcHandlerError("EXPORT_TOKEN_INVALID", "Invalid export token");
-  }
-  if (Date.now() > entry.expiresAt) {
-    throw new IpcHandlerError("EXPORT_TOKEN_EXPIRED", "Export token has expired");
-  }
-  return entry.filePath;
-}
 
 function handle<T>(
   channel: string,
