@@ -20,7 +20,8 @@
     "audit:deadcode:main": "knip --no-progress --no-config-hints --include files,dependencies",
     "audit:deadcode:ui": "knip --no-progress --no-config-hints --include files,dependencies --directory ui",
     "audit:deadcode": "npm run audit:deadcode:main && npm run audit:deadcode:ui",
-    "check": "npm run lint && npm run typecheck && npm run test",
+    "check:i18n": "node scripts/check-i18n.js",
+    "check": "npm run lint && npm run typecheck && npm run check:i18n && npm run test",
     "clean:generated": "rm -rf dist .next coverage ui/.next ui/out ui/.vercel ui/public/peaks ui/tsconfig.tsbuildinfo"
   },
   "description": "Automated Quran Recitation Synchronization",
