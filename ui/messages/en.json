@@ -243,7 +243,15 @@
       "munajjamFound": "munajjam found",
       "munajjamNotFound": "munajjam not found",
       "installSuccess": "Runtime installation completed successfully",
-      "installFailed": "Runtime installation failed"
+      "installFailed": "Runtime installation failed",
+      "reinstallButton": "Reinstall runtime",
+      "reinstallShort": "Reinstall",
+      "reinstallTooltip": "Reinstall the managed runtime",
+      "reinstallConfirmTitle": "Reinstall the managed runtime?",
+      "reinstallConfirmDesc": "This re-downloads Munajjam and reinstalls the Python environment. It can take several minutes and uses network bandwidth. Run this after updating Munajjam, or if the runtime is misbehaving.",
+      "reinstallConfirm": "Reinstall",
+      "reinstallClose": "Close",
+      "cancel": "Cancel"
     },
     "workspace": {
       "title": "Workspaces",

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useWorkspace } from "@/lib/workspace-context";
+import ReinstallRuntimeButton from "./ReinstallRuntimeButton";
 
 export default function EmptyStateView() {
   const t = useTranslations("qa.workspace");
@@ -30,6 +31,9 @@ export default function EmptyStateView() {
         >
           {t("createFirst")}
         </button>
+        <div className="pt-2">
+          <ReinstallRuntimeButton variant="text" />
+        </div>
       </motion.div>
     </div>
   );

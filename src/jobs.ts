@@ -7,6 +7,7 @@ import { scanAudioFiles } from "./audio-files";
 import { parseJobEvent } from "./job-events";
 import { generatePeaks } from "./peaks";
 import { inspectPythonRuntime, resolveAlignmentEntrypoint } from "./python-runtime";
+import { quranCsvPath } from "./paths";
 import { createLogger } from "./logger";
 import type { AlignmentRow, JobRow, JobConfig } from "./ipc-types";
 
@@ -208,6 +209,7 @@ export class JobsManager {
         ]
           .filter(Boolean)
           .join(path.delimiter),
+        MUNAJJAM_QURAN_CSV: quranCsvPath(),
       },
     });
 

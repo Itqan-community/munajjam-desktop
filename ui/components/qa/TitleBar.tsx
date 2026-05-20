@@ -7,6 +7,7 @@ import { useWorkspace } from "@/lib/workspace-context";
 import { useReciters } from "@/lib/reciters-context";
 import { allSurahs } from "@/lib/surah-metadata";
 import { getElectronBridge } from "@/lib/electron";
+import ReinstallRuntimeButton from "./ReinstallRuntimeButton";
 
 interface TitleBarProps {
   locale: string;
@@ -139,6 +140,8 @@ export default function TitleBar({ locale }: TitleBarProps) {
             <Download className={`w-3.5 h-3.5 ${exporting ? "animate-pulse" : ""}`} />
           </button>
         )}
+
+      <ReinstallRuntimeButton variant="icon" />
     </div>
   );
 }
