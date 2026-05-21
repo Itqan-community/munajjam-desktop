@@ -1,7 +1,7 @@
 {
   "name": "munajjam-desktop",
   "productName": "Munajjam",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "main": "dist/main.js",
   "scripts": {
@@ -75,7 +75,7 @@
     "@typescript-eslint/eslint-plugin": "^8.46.1",
     "@typescript-eslint/parser": "^8.46.1",
     "concurrently": "^8.2.2",
-    "electron": "^32.2.0",
+    "electron": "^32.3.3",
     "electron-builder": "^24.13.3",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^10.1.8",

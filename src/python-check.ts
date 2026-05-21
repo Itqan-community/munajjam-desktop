@@ -15,6 +15,7 @@ const log = createLogger("python-check");
 const MUNAJJAM_REPO_URL = "https://github.com/Itqan-community/Munajjam";
 const MUNAJJAM_REPO_REF = "main";
 const PYTHON_VERSION = "3.12";
+let activeInstall: Promise<number> | null = null;
 
 export interface InstallerInvocation {
   command: string;
@@ -130,7 +131,7 @@ function installerEnvironment(): NodeJS.ProcessEnv {
   return { ...env, PYTHONUNBUFFERED: "1", PYTHONIOENCODING: "utf-8" };
 }
 
-export async function installRuntime(): Promise<number> {
+async function runInstallRuntime(): Promise<number> {
   const scriptPath = installerScriptPath();
   const rootPath = managedRuntimeRoot();
   const invocation = resolveInstallerInvocation(process.platform, scriptPath, rootPath);
@@ -190,4 +191,17 @@ export async function installRuntime(): Promise<number> {
       resolve(exitCode);
     });
   });
+}
+
+export async function installRuntime(): Promise<number> {
+  if (activeInstall) {
+    log.info("installRuntime already running; joining existing invocation");
+    return activeInstall;
+  }
+
+  activeInstall = runInstallRuntime().finally(() => {
+    activeInstall = null;
+  });
+
+  return activeInstall;
 }

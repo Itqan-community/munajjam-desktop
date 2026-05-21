@@ -71,9 +71,17 @@ if [[ ! -d "$REPO_DIR/.git" ]]; then
   git clone --depth 1 --branch "$REPO_REF" "$REPO_URL" "$REPO_DIR"
 else
   echo "Updating managed Munajjam repository..."
-  git -C "$REPO_DIR" fetch origin "$REPO_REF" --depth 1
-  git -C "$REPO_DIR" checkout "$REPO_REF"
-  git -C "$REPO_DIR" pull --ff-only origin "$REPO_REF"
+  # Hard-reset to upstream so we recover from any force-push or local drift.
+  # The managed clone is a delivery mechanism, not user-editable work.
+  git -C "$REPO_DIR" fetch --depth 1 origin "$REPO_REF"
+  git -C "$REPO_DIR" reset --hard FETCH_HEAD
+fi
+
+# Drop a stale venv whose linked Python no longer works (e.g. after a Homebrew
+# python@3.12 upgrade that breaks ABI of bundled .so files like pyexpat).
+if [[ -d "$VENV_DIR" ]] && ! "$VENV_PYTHON" -c "import sys, xmlrpc.client" >/dev/null 2>&1; then
+  echo "Existing virtual environment is broken; recreating..."
+  rm -rf "$VENV_DIR"
 fi
 
 if [[ ! -d "$VENV_DIR" ]]; then
