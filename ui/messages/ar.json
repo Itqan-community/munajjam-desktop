@@ -245,7 +245,6 @@
       "installSuccess": "اكتمل تثبيت البيئة بنجاح",
       "installFailed": "فشل تثبيت البيئة",
       "reinstallButton": "إعادة تثبيت البيئة",
-      "reinstallShort": "إعادة التثبيت",
       "reinstallTooltip": "إعادة تثبيت بيئة التشغيل المُدارة",
       "reinstallConfirmTitle": "إعادة تثبيت بيئة التشغيل المُدارة؟",
       "reinstallConfirmDesc": "ستتم إعادة تنزيل Munajjam وإعادة تثبيت بيئة Python. قد يستغرق ذلك عدة دقائق ويستخدم بيانات الإنترنت. شغّل هذا بعد تحديث Munajjam، أو عند حدوث خلل في بيئة التشغيل.",
